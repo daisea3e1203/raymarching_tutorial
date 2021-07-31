@@ -8,28 +8,59 @@ precision highp float;
 #define MAX_DIST 100.
 #define SURFACE_DIST .01
 
+// Xforms
+// ----------------------------------------
+mat4 translate(vec3 t) {
+  return mat4(1., 0, 0, -t.x, 0, 1, 0, -t.y, 0, 0, 1, -t.z, 0, 0, 0, 1);
+}
+
+mat4 rotateX(float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  return mat4(1, 0., 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1);
+}
+
+mat4 rotateY(float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  return mat4(c, 0., s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1);
+}
+
+mat4 rotateZ(float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  return mat4(c, -s, 0., 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+}
+
 // Geometry
 // ----------------------------------------
-// Distance from the plane at y=0
+// Plane (y=0)
 float distPlane(vec3 p) {
   // Distance from the global plane
   return p.y;
 }
-
-// Distance from the sphere
-float distSphere(vec3 p) {
-  // Sphere: (x, y, z, r)
-  // vec4 s = vec4(0, 1, 6. + sin(iTime) * 3., 1.);
-  vec4 s = vec4(0, 1, 6., 1.);
-  // Distance from the surface of the sphere
-  return length(p - s.xyz) - s.w;
+// Box
+float distBox(vec3 p, vec3 r) {
+  vec3 q = abs(p) - r;
+  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
-
+// Sphere
+float distSphere(vec3 p, float r) {
+  // Random displacement
+  float disp = sin(5.0 * p.x + iTime) * sin(5.0 * p.y) * sin(5.0 * p.z) * 0.15;
+  // Distance from the surface of the sphere
+  return length(p) - r + disp;
+}
 // Calculate the distance to the nearest geometry from given position p
 float getDist(vec3 p) {
   // The minimum distance regarding all geometry
-  float d = min(distSphere(p), distPlane(p));
-
+  // float d = min(distSphere(p), distPlane(p));
+  // float d = min(box, distPlane(p));
+  vec4 boxP = vec4(p, 1.) * translate(vec3(1, 1, 6.)) * rotateY(iTime * 0.5) *
+              rotateX(20.);
+  vec4 sphereP = vec4(p, 1.) * translate(vec3(-1., 1., 6.));
+  float d = min(min(distBox(boxP.xyz, vec3(0.5)), distPlane(p)),
+                distSphere(sphereP.xyz, 0.75));
   return d;
 }
 
@@ -77,7 +108,7 @@ float getLight(vec3 p) {
   dif = clamp(dif, 0., 1.);
 
   // Shadows
-  float d = rayMarch(p + n * SURFACE_DIST * 2., l);
+  float d = rayMarch(p + n * SURFACE_DIST * 15., l);
 
   if (d < length(lightPos - p))
     dif *= .1;
@@ -98,10 +129,9 @@ void main() {
   vec3 p = ro + rd * d;
   // Diffuse Lighting
   float dif = getLight(p);
-  // (Depends on the scene scale)
-  float zdepth = d / 10.;
-  vec3 normal = getNormal(p);
+  vec3 albedo = vec3(1.0, 1.0, 1.0);
+  vec3 color = vec3(dif) * albedo;
 
   // Set the output color
-  gl_FragColor = vec4(vec3(dif), 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }
