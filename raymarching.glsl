@@ -19,7 +19,8 @@ float distPlane(vec3 p) {
 // Distance from the sphere
 float distSphere(vec3 p) {
   // Sphere: (x, y, z, r)
-  vec4 s = vec4(0, 1, 6. + sin(iTime) * 3., 1.);
+  // vec4 s = vec4(0, 1, 6. + sin(iTime) * 3., 1.);
+  vec4 s = vec4(0, 1, 6., 1.);
   // Distance from the surface of the sphere
   return length(p - s.xyz) - s.w;
 }
@@ -47,6 +48,23 @@ float rayMarch(vec3 ro, vec3 rd) {
   return d0;
 }
 
+vec3 getNormal(vec3 p) {
+  float d = getDist(p);
+  // (Epsilon)
+  vec2 e = vec2(.01, 0);
+
+  // First order approximation of the derivitive (Forward difference)
+  // vec3 n = d - vec3(getDist(p - e.xyy), getDist(p - e.yxy), getDist(p -
+  // e.yyx));
+
+  // First order approximation of the derivitive
+  vec3 n = vec3(getDist(p + e.xyy) - getDist(p - e.xyy),
+                getDist(p + e.yxy) - getDist(p - e.yxy),
+                getDist(p + e.yyx) - getDist(p - e.yyx));
+
+  return normalize(n);
+}
+
 void main() {
   // Center and normalize coordinate
   vec2 uv = (gl_FragCoord.xy - .5 * iResolution.xy) / iResolution.y;
@@ -56,10 +74,11 @@ void main() {
   // Third dimension represents the focal length
   vec3 rd = normalize(vec3(uv.x, uv.y, 1));
   float d = rayMarch(ro, rd);
+  vec3 p = ro + rd * d;
   // (Depends on the scene scale)
-  d /= 10.;
-  vec3 color = vec3(d);
+  float zdepth = d / 10.;
+  vec3 normal = getNormal(p);
 
   // Set the output color
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(normal, 1.0);
 }
