@@ -65,20 +65,36 @@ vec3 getNormal(vec3 p) {
   return normalize(n);
 }
 
+float getLight(vec3 p) {
+  // Light position
+  vec3 lightPos = vec3(5. * sin(iTime), 5., 5.0 * cos(iTime));
+  // Light vector
+  vec3 l = normalize(lightPos - p);
+  vec3 n = getNormal(p);
+
+  float dif = dot(n, l);
+  dif = clamp(dif, 0., 1.);
+
+  return dif;
+}
+
 void main() {
   // Center and normalize coordinate
   vec2 uv = (gl_FragCoord.xy - .5 * iResolution.xy) / iResolution.y;
   // Ray origin (Camera Position)
   vec3 ro = vec3(0, 1, 0);
   // Ray direction
-  // Third dimension represents the focal length
+  //     Third dimension represents the focal length
   vec3 rd = normalize(vec3(uv.x, uv.y, 1));
   float d = rayMarch(ro, rd);
+  // Surface Position
   vec3 p = ro + rd * d;
+  // Diffuse Lighting
+  float dif = getLight(p);
   // (Depends on the scene scale)
   float zdepth = d / 10.;
   vec3 normal = getNormal(p);
 
   // Set the output color
-  gl_FragColor = vec4(normal, 1.0);
+  gl_FragColor = vec4(vec3(dif), 1.0);
 }
