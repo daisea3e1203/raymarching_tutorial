@@ -72,8 +72,15 @@ float getLight(vec3 p) {
   vec3 l = normalize(lightPos - p);
   vec3 n = getNormal(p);
 
+  // Diffuse Lighting
   float dif = dot(n, l);
   dif = clamp(dif, 0., 1.);
+
+  // Shadows
+  float d = rayMarch(p + n * SURFACE_DIST * 2., l);
+
+  if (d < length(lightPos - p))
+    dif *= .1;
 
   return dif;
 }
