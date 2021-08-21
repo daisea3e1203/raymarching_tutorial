@@ -1,5 +1,13 @@
 # RayMarching Tutorial
 
+## 環境設定
+
+![](img/shadertoy.png)
+Visual Studio CodeにこのExtensionをいれる。
+Command Palette で `ShaderToy: Show GLSL Preview` を実行するとLive Previewが走る。
+
+## RayMarchingのイメージ
+
 ![](img/01.jpg)
 
 左下のカメラで右の球を撮りたい
